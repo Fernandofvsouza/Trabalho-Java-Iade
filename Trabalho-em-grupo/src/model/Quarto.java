@@ -90,26 +90,32 @@ public class Quarto {
 
     // Método para listar quartos ocupados, incluindo verificação se há quartos
     // ocupados
-    // Falta adicionar dados de ocupação do quarto, como nome do hóspede e datas de
-    // check-in e check-out
     public static void listarQuartosOcupados() {
         System.out.println("Lista de quartos ocupados: ");
-        // Contador para verificar se há quartos ocupados
         int quartosOcupados = 0;
+
         for (int i = 0; i < contadorQuartos; i++) {
             Quarto quarto = quartos[i];
-            if (quarto.estaOcupado) {
-                System.out.println("ID: " + quarto.idQuarto + ", Número: " + quarto.numeroQuarto + ", Capacidade: "
-                        + quarto.capacidade);
-                quartosOcupados++;
+            if (quarto == null) {
+                continue;
             }
 
+            if (quarto.estaOcupado) {
+                System.out.println("ID: " + quarto.idQuarto +
+                        ", Número: " + quarto.numeroQuarto +
+                        ", Capacidade: " + quarto.capacidade);
+
+                // Dados de ocupação (hóspede + check-in/out) com base na reserva vigente
+                Reservas r = Reservas.getReservaAtivaVigentePorQuarto(quarto.idQuarto);
+                System.out.println("  " + Reservas.formatarDadosOcupacao(r));
+
+                quartosOcupados++;
+            }
         }
-        // Se não houver quartos ocupados, exibe a seguinte mensagem
+
         if (quartosOcupados == 0) {
             System.out.println("Nenhum quarto está ocupado no momento.");
         }
-
     }
 
     // Método para listar um quarto específico

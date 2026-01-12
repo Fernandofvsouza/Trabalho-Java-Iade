@@ -293,6 +293,8 @@ public class Reservas {
         }
     }
 
+   
+
     // validações
 
     private static Reservas procurarReservaPorId(int idReserva) {
@@ -380,5 +382,43 @@ public class Reservas {
          
             return false;
         }
+    }
+
+
+     /**
+     * Retorna a reserva ativa vigente (hoje entre dataInicio e dataFim, inclusivo)
+     * para um quarto. Se houver mais de uma (não deveria ocorrer), retorna a primeira encontrada.
+     */
+    public static Reservas getReservaAtivaVigentePorQuarto(int idQuarto) {
+        LocalDate hoje = LocalDate.now();
+        for (int i = 0; i < contadorReservas; i++) {
+            Reservas r = reservas[i];
+            if (r == null || !r.ativa) {
+                continue;
+            }
+            if (r.idQuarto != idQuarto) {
+                continue;
+            }
+            boolean vigente = !hoje.isBefore(r.dataInicio) && !hoje.isAfter(r.dataFim);
+            if (vigente) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Formata informações de ocupação de um quarto (hóspede + check-in/out) com base
+     * na reserva vigente.
+     */
+    public static String formatarDadosOcupacao(Reservas r) {
+        if (r == null) {
+            return "(sem dados de ocupação)";
+        }
+        Hospede h = Hospede.getHospedePorId(r.idHospede);
+        String nome = (h != null && h.nome != null) ? h.nome : "(hóspede desconhecido)";
+        return "Hóspede: " + nome +
+                " | Check-in: " + r.dataInicio +
+                " | Check-out: " + r.dataFim;
     }
 }
