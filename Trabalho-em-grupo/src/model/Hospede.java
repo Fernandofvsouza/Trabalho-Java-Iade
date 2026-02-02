@@ -1,5 +1,13 @@
 package model;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Hospede {
     public int idHospede;
     public String nome;
@@ -10,8 +18,17 @@ public class Hospede {
     private static int contadorHospedes = 0;
     private static int proximoIdHospede = 1;
 
+    private static final Path CSV_PATH = Paths.get("data", "hospedes.csv");
+
     private Hospede(String nome, String documento) {
         this.idHospede = proximoIdHospede++;
+        this.nome = nome;
+        this.documento = documento;
+    }
+
+    // Construtor interno para carga (mantém ID do arquivo)
+    private Hospede(int idHospede, String nome, String documento) {
+        this.idHospede = idHospede;
         this.nome = nome;
         this.documento = documento;
     }
@@ -35,6 +52,8 @@ public class Hospede {
         Hospede h = new Hospede(nome.trim(), documento.trim());
         hospedes[contadorHospedes++] = h;
         System.out.println("Hóspede criado com sucesso! ID: " + h.idHospede);
+
+        salvarCsv();
         return true;
     }
 
@@ -105,6 +124,7 @@ public class Hospede {
         }
 
         System.out.println("Hóspede " + idHospede + " editado com sucesso.");
+        salvarCsv();
         return true;
     }
 
@@ -119,6 +139,118 @@ public class Hospede {
             }
         }
         return null;
+    }
+
+    // =====================
+    // Persistência CSV
+    // =====================
+
+    /** Carrega hóspedes do CSV (se existir). Deve ser chamado no início do programa. */
+    public static void carregarCsv() {
+        if (!Files.exists(CSV_PATH)) {
+            return;
+        }
+
+        // limpa a memória atual
+        for (int i = 0; i < contadorHospedes; i++) {
+            hospedes[i] = null;
+        }
+        contadorHospedes = 0;
+        proximoIdHospede = 1;
+
+        int maxId = 0;
+
+        try (BufferedReader br = Files.newBufferedReader(CSV_PATH, StandardCharsets.UTF_8)) {
+            String line;
+            boolean isFirst = true;
+            while ((line = br.readLine()) != null) {
+                line = line.trim();
+                if (line.isBlank()) {
+                    continue;
+                }
+                if (isFirst) {
+                    // suporta cabeçalho "id;nome;documento"
+                    isFirst = false;
+                    if (line.toLowerCase().startsWith("id;")) {
+                        continue;
+                    }
+                }
+
+                String[] parts = line.split(";", -1);
+                if (parts.length < 3) {
+                    continue;
+                }
+
+                Integer id = tryParseInt(parts[0]);
+                if (id == null) {
+                    continue;
+                }
+
+                String nome = parts[1];
+                String documento = parts[2];
+
+                if (contadorHospedes >= hospedes.length) {
+                    break;
+                }
+
+                Hospede h = new Hospede(id, nome, documento);
+                hospedes[contadorHospedes++] = h;
+                if (id > maxId) {
+                    maxId = id;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Falha ao ler hóspedes do CSV: " + e.getMessage());
+        }
+
+        proximoIdHospede = maxId + 1;
+    }
+
+    /** Salva hóspedes em CSV (sobrescreve). */
+    public static void salvarCsv() {
+        try {
+            Path parent = CSV_PATH.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+
+            try (BufferedWriter bw = Files.newBufferedWriter(CSV_PATH, StandardCharsets.UTF_8)) {
+                bw.write("id;nome;documento");
+                bw.newLine();
+                for (int i = 0; i < contadorHospedes; i++) {
+                    Hospede h = hospedes[i];
+                    if (h == null) {
+                        continue;
+                    }
+                    // simples: evita quebrar o CSV
+                    String nome = safeCsv(h.nome);
+                    String doc = safeCsv(h.documento);
+                    bw.write(h.idHospede + ";" + nome + ";" + doc);
+                    bw.newLine();
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Falha ao salvar hóspedes no CSV: " + e.getMessage());
+        }
+    }
+
+    private static String safeCsv(String s) {
+        if (s == null) {
+            return "";
+        }
+        // remove separador/linhas para não corromper o CSV
+        return s.replace(";", " ").replace("\n", " ").replace("\r", " ").trim();
+    }
+
+    private static Integer tryParseInt(String s) {
+        if (s == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     // validações/helpers

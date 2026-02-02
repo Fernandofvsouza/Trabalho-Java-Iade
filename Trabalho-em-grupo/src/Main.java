@@ -7,6 +7,10 @@ public class Main {
     public static void main(String[] args) {
         Quarto.criarQuartosIniciais();
 
+        // Carrega dados persistidos (se existirem)
+        Hospede.carregarCsv();
+        Reservas.carregarCsv();
+
         try (Scanner sc = new Scanner(System.in)) {
             while (true) {
                 System.out.println("\n===== MENU PRINCIPAL =====");
@@ -160,13 +164,13 @@ public class Main {
                         break;
                     }
 
-                    System.out.print("Novo nome (enter para manter): ");
+                    System.out.print("Novo nome: ");
                     String novoNome = sc.nextLine();
                     if (novoNome.isBlank()) {
                         novoNome = null;
                     }
 
-                    System.out.print("Novo documento (enter para manter): ");
+                    System.out.print("Novo documento: ");
                     String novoDocumento = sc.nextLine();
                     if (novoDocumento.isBlank()) {
                         novoDocumento = null;

@@ -88,8 +88,7 @@ public class Quarto {
         }
     }
 
-    // Método para listar quartos ocupados, incluindo verificação se há quartos
-    // ocupados
+    // Método para listar quartos ocupados
     public static void listarQuartosOcupados() {
         System.out.println("Lista de quartos ocupados: ");
         int quartosOcupados = 0;
